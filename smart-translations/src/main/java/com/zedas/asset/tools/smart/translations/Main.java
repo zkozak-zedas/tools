@@ -24,7 +24,7 @@ public class Main
             {
                 result.add(line+"\n");
             }
-            else if(line.contains("  },"))
+            else if(line.contains("  },") || line.contains("\t},"))
             {
                 result.add("  }, {"+"\n");
             }
