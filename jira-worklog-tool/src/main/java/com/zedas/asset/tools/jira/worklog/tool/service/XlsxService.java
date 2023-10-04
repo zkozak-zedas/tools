@@ -1,6 +1,7 @@
 package com.zedas.asset.tools.jira.worklog.tool.service;
 
 import com.zedas.asset.tools.jira.worklog.tool.model.AppConfig;
+import com.zedas.asset.tools.jira.worklog.tool.model.UserConfig;
 import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Issue;
 import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.JiraResponse;
 import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Worklog__1;
@@ -31,8 +32,10 @@ public class XlsxService
         return workbook;
     }
 
-    public void prepareTimeSheetPage(XSSFWorkbook workbook, AppConfig config, JiraResponse data)
+    public void prepareTimeSheetPage(XSSFWorkbook workbook, UserConfig userConfig)
     {
+        AppConfig config = userConfig.getAppConfig();
+        JiraResponse data = userConfig.getJiraResponse();
         String name = WorkbookUtil.createSafeSheetName(calcSimpleUsername(config.getUsername()) + "-ts");
         Sheet sheet = workbook.createSheet(name);
         sheet.setColumnWidth(0, 25 * 256);
@@ -93,8 +96,10 @@ public class XlsxService
         return formatter.format(date);
     }
 
-    public void prepareDetailsPage(XSSFWorkbook workbook, AppConfig config, JiraResponse data)
+    public void prepareDetailsPage(XSSFWorkbook workbook, UserConfig userConfig)
     {
+        AppConfig config = userConfig.getAppConfig();
+        JiraResponse data = userConfig.getJiraResponse();
         String simpleUsername = calcSimpleUsername(config.getUsername());
         String sheetName = WorkbookUtil.createSafeSheetName(simpleUsername + "-details");
         Sheet sheet = workbook.createSheet(sheetName);
@@ -149,10 +154,68 @@ public class XlsxService
         }
     }
 
-    public void updateSumsPage(XSSFWorkbook workbook, List<JiraResponse> data)
+    public void updateSumsPage(XSSFWorkbook workbook, List<UserConfig> userConfigs)
     {
-        Sheet sheet = workbook.getSheet("sums");
-        workbook.getSheet("sums").createRow(0).createCell(0).setCellValue("Sums");
+        if (userConfigs.size() > 0)
+        {
+
+            UserConfig firstUserConfig = userConfigs.get(0);
+            Sheet sheet = workbook.getSheet("sums");
+            sheet.setColumnWidth(0, 15 * 256);
+
+            Row row1 = sheet.createRow(0);
+            row1.createCell(0).setCellValue("Month");
+            row1.createCell(1).setCellValue(firstUserConfig.getAppConfig().getMonth());
+
+            Row row2 = sheet.createRow(1);
+            row2.createCell(0).setCellValue("Year");
+            row2.createCell(1).setCellValue(firstUserConfig.getAppConfig().getYear());
+
+            Row row3 = sheet.createRow(3);
+            row3.createCell(1).setCellValue("Hours");
+            row3.createCell(3).setCellValue("Bugs");
+            row3.createCell(5).setCellValue("Not Bugs");
+
+            userConfigs.forEach(userConfig -> {
+                Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+                row.createCell(0).setCellValue(calcSimpleUsername(userConfig.getAppConfig().getUsername()));
+                row.createCell(1).setCellValue(calculateAllHours(userConfig.getJiraResponse()));
+                row.createCell(3).setCellValue(calculateBugHours(userConfig.getJiraResponse()));
+                row.createCell(5).setCellValue(calculateNotBugHours(userConfig.getJiraResponse()));
+            });
+
+            Row row4 = sheet.createRow(sheet.getLastRowNum() + 2);
+            row4.createCell(1).setCellValue("Stats");
+
+            Row row5 = sheet.createRow(sheet.getLastRowNum() + 1);
+            row5.createCell(0).setCellValue("Sum all");
+            row5.createCell(1).setCellFormula("SUM(B5:B" + (userConfigs.size() + 4) + ")");
+
+            Row row6 = sheet.createRow(sheet.getLastRowNum() + 1);
+            row6.createCell(0).setCellValue("Sum Bugs");
+            row6.createCell(1).setCellFormula("SUM(D5:D" + (userConfigs.size() + 4) + ")");
+
+            Row row7 = sheet.createRow(sheet.getLastRowNum() + 1);
+            row7.createCell(0).setCellValue("Sum Not Bugs");
+            row7.createCell(1).setCellFormula("SUM(F5:F" + (userConfigs.size() + 4) + ")");
+
+            // TODO more statistics here.....
+        }
+    }
+
+    private double calculateNotBugHours(JiraResponse jiraResponse)
+    {
+        return 3;
+    }
+
+    private double calculateBugHours(JiraResponse jiraResponse)
+    {
+        return 2;
+    }
+
+    private double calculateAllHours(JiraResponse jiraResponse)
+    {
+        return 1;
     }
 
     private List<Worklog__1> prepareUserWorkLogs(AppConfig config, Issue issue)
