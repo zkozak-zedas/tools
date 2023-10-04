@@ -1,11 +1,9 @@
 {
-  "mode":"read",
-  "users": "pmalek@zedas.com, mgellert@zedas.com",
+  "users": "mgellert@zedas.com",
   "email": "mgellert@zedas.com",
   "token": "token-xxxxx",
   "url": "https://zedas.atlassian.net",
   "year": 2023,
   "month": 9,
-  "path": "C:/duaa",
-  "worklog-path": "C:/dupa"
+  "path": "C:\\Users\\mgellert\\Desktop\\worklog.xlsx"
 }

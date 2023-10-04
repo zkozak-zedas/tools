@@ -11,7 +11,7 @@ public class JqlRequest
 
     @SerializedName("fields")
     @Expose
-    private final List<String> fields = Arrays.asList("key", "worklog");
+    private final List<String> fields = Arrays.asList("key","summary","issuetype","worklog");
     @SerializedName("fieldsByKeys")
     @Expose
     private final Boolean fieldsByKeys = false;

@@ -16,6 +16,8 @@ public class AppConfigService
         final String[] users = usersString.split(",");
         for (String user : users) {
             AppConfig appConfig = new AppConfig(user, jsonConfig.getPath(), jsonConfig.getUrl());
+            appConfig.setYear(jsonConfig.getYear());
+            appConfig.setMonth(jsonConfig.getMonth());
 
 //            String safeUsername = user.replace("@", "\\u0040");
 
@@ -30,6 +32,9 @@ public class AppConfigService
             final String authHeader = "Basic " + encoded;
 
             appConfig.setJql(jql);
+            appConfig.setStartOfMonth(startDate);
+            appConfig.setEndOfMonth(endDate);
+            appConfig.setLastDayOfMonth(lastDayOfMonth);
             appConfig.setBasicAuthHeader(authHeader);
             configs.add(appConfig);
         }
