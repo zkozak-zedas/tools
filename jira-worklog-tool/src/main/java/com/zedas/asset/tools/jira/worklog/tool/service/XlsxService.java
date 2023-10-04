@@ -13,8 +13,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -29,11 +31,66 @@ public class XlsxService
         return workbook;
     }
 
-    public void prepareTimeSheetPage(XSSFWorkbook workbook, String username, JiraResponse data)
+    public void prepareTimeSheetPage(XSSFWorkbook workbook, AppConfig config, JiraResponse data)
     {
-        String name = WorkbookUtil.createSafeSheetName(calcSimpleUsername(username) + "-ts");
+        String name = WorkbookUtil.createSafeSheetName(calcSimpleUsername(config.getUsername()) + "-ts");
         Sheet sheet = workbook.createSheet(name);
+        sheet.setColumnWidth(0, 25 * 256);
+        sheet.setColumnWidth(1, 25 * 256);
+        if (data.getIssues().size() > 0)
+        {
+            final List<Worklog__1> allIssueUserWorklogs = new ArrayList<>();
+            data.getIssues().forEach(issue -> allIssueUserWorklogs.addAll(prepareUserWorkLogs(config, issue)));
+            String fullUsername = allIssueUserWorklogs.get(0).getAuthor().getDisplayName();
 
+            Row row1 = sheet.createRow(0);
+            row1.createCell(0).setCellValue("TimeSheet");
+            row1.createCell(1).setCellValue(fullUsername);
+
+            Row row2 = sheet.createRow(1);
+            row2.createCell(0).setCellValue("Client");
+            row2.createCell(1).setCellValue("Zedas");
+
+            Row row3 = sheet.createRow(2);
+            row3.createCell(0).setCellValue(prepareTsMonthText(1, config.getMonth(), config.getYear()));
+            row3.createCell(1).setCellValue("Work hours");
+
+            List<Integer> days = IntStream.rangeClosed(1, config.getLastDayOfMonth()).boxed().toList();
+            days.forEach(day -> {
+                Row row = sheet.createRow(sheet.getLastRowNum() + 1);
+
+                String date = config.getYear() + "-" + (config.getMonth() < 10 ? "0" + config.getMonth() : config.getMonth()) + "-" + (day < 10 ? "0" + day : day);
+                double workHours = allIssueUserWorklogs.stream()
+                        .filter(worklog -> convertToDate(worklog.getStarted()).equals(convertToDate(date)))
+                        .mapToDouble(worklog -> worklog.getTimeSpentSeconds() / 3600.0)
+                        .sum();
+
+                row.createCell(0).setCellValue(prepareTsDayText(day, config.getMonth(), config.getYear()));
+                row.createCell(1).setCellValue(workHours);
+            });
+
+            Row row4 = sheet.createRow(sheet.getLastRowNum() + 1);
+            String formula = "SUM(B4:B" + (days.size() + 3) + ")";
+            row4.createCell(1).setCellFormula(formula);
+
+            Row row5 = sheet.createRow(sheet.getLastRowNum() + 3);
+            row5.createCell(0).setCellValue("Aleksander Lisocki");
+            row5.createCell(1).setCellValue(fullUsername);
+        }
+    }
+
+    private String prepareTsDayText(Integer day, int month, int year)
+    {
+        Date date = new Date(year - 1900, month - 1, day);
+        SimpleDateFormat formatter = new SimpleDateFormat("dd - EEE", Locale.ENGLISH);
+        return formatter.format(date);
+    }
+
+    private String prepareTsMonthText(Integer day, int month, int year)
+    {
+        Date date = new Date(year - 1900, month - 1, day);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy.M (MMMM)", Locale.ENGLISH);
+        return formatter.format(date);
     }
 
     public void prepareDetailsPage(XSSFWorkbook workbook, AppConfig config, JiraResponse data)
@@ -72,12 +129,7 @@ public class XlsxService
             Row row = sheet.createRow(sheet.getLastRowNum() + 1);
             row.createCell(0).setCellValue(issue.getKey());
             row.createCell(1).setCellValue(issue.getFields().getSummary());
-            var userWorklogs = issue.getFields().getWorklog().getWorklogs()
-                    .stream()
-                    .filter(worklog -> worklog.getAuthor().getEmailAddress().equalsIgnoreCase(config.getUsername()))
-                    .filter(worklog -> convertToDate(worklog.getStarted()).compareTo(convertToDate(config.getStartOfMonth())) >= 0)
-                    .filter(worklog -> convertToDate(worklog.getStarted()).compareTo(convertToDate(config.getEndOfMonth())) <= 0)
-                    .toList();
+            List<Worklog__1> userWorklogs = prepareUserWorkLogs(config, issue);
 
             userWorklogs.forEach(worklog -> {
                 int day = calcPositionFromDate(worklog.getStarted());
@@ -88,7 +140,7 @@ public class XlsxService
             rowCounter.getAndIncrement();
         });
 
-        if(data.getIssues().size()>0)
+        if (data.getIssues().size() > 0)
         {
             int sumRow = sheet.getLastRowNum() + 1;
             String formula = "SUM(" + totalSumColumn + "6:" + totalSumColumn + sumRow + ")";
@@ -101,6 +153,17 @@ public class XlsxService
     {
         Sheet sheet = workbook.getSheet("sums");
         workbook.getSheet("sums").createRow(0).createCell(0).setCellValue("Sums");
+    }
+
+    private List<Worklog__1> prepareUserWorkLogs(AppConfig config, Issue issue)
+    {
+        var userWorklogs = issue.getFields().getWorklog().getWorklogs()
+                .stream()
+                .filter(worklog -> worklog.getAuthor().getEmailAddress().equalsIgnoreCase(config.getUsername()))
+                .filter(worklog -> convertToDate(worklog.getStarted()).compareTo(convertToDate(config.getStartOfMonth())) >= 0)
+                .filter(worklog -> convertToDate(worklog.getStarted()).compareTo(convertToDate(config.getEndOfMonth())) <= 0)
+                .toList();
+        return userWorklogs;
     }
 
     private String getColumnNameByIndex(int i)

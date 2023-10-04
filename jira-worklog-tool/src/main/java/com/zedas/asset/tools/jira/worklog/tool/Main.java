@@ -53,7 +53,7 @@ public class Main
                 }
                 xlsxService.prepareDetailsPage(workbook, config, jiraResponse);
                 logger.debug("Details sheet for " + config.getUsername() + " created.");
-                xlsxService.prepareTimeSheetPage(workbook, config.getUsername(), jiraResponse);
+                xlsxService.prepareTimeSheetPage(workbook, config, jiraResponse);
                 logger.debug("Timesheet for " + config.getUsername() + " created.");
             }
             xlsxService.updateSumsPage(workbook, jiraResponses);
