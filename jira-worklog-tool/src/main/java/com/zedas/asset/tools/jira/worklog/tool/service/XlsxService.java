@@ -188,7 +188,7 @@ public class XlsxService
         String simpleUsername = calcSimpleUsername(config.getUsername());
         String sheetName = WorkbookUtil.createSafeSheetName(simpleUsername + "-details");
         Sheet sheet = workbook.createSheet(sheetName);
-        sheet.setColumnWidth(0, 25 * 256);
+        sheet.setColumnWidth(0, 15 * 256);
         sheet.setColumnWidth(1, 50 * 256);
 
         Row row1 = sheet.createRow(0);
@@ -213,7 +213,7 @@ public class XlsxService
         row4.createCell(days.size() + 3).setCellValue("Sum");
         for (int day : days)
         {
-            sheet.setColumnWidth(day + 1, 5 * 256);
+            sheet.setColumnWidth(day + 1, 7 * 256);
         }
 
         AtomicInteger rowCounter = new AtomicInteger(6);
@@ -227,7 +227,13 @@ public class XlsxService
 
             userWorklogs.forEach(worklog -> {
                 int day = calcPositionFromDate(worklog.getStarted());
-                row.createCell(day).setCellValue(worklog.getTimeSpentSeconds() / 3600.0);
+                Cell cell = row.getCell(day);
+                if(cell != null) {
+                    double numericCellValue = row.getCell(day).getNumericCellValue();
+                    row.getCell(day).setCellValue(numericCellValue + (worklog.getTimeSpentSeconds() / 3600.0));
+                } else {
+                    row.createCell(day).setCellValue(worklog.getTimeSpentSeconds() / 3600.0);
+                }
             });
             String formula = "SUM(C" + rowCounter.get() + ":" + sumColumn + rowCounter.get() + ")";
             row.createCell(days.size() + 3).setCellFormula(formula);
