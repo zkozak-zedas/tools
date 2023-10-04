@@ -42,8 +42,7 @@ public class XlsxService
         sheet.setColumnWidth(1, 25 * 256);
         if (data.getIssues().size() > 0)
         {
-            final List<Worklog__1> allIssueUserWorklogs = new ArrayList<>();
-            data.getIssues().forEach(issue -> allIssueUserWorklogs.addAll(prepareUserWorkLogs(config, issue)));
+            final List<Worklog__1> allIssueUserWorklogs = prepareAllIssueUserWorklogs(data, config);
             String fullUsername = allIssueUserWorklogs.get(0).getAuthor().getDisplayName();
 
             Row row1 = sheet.createRow(0);
@@ -94,6 +93,38 @@ public class XlsxService
         Date date = new Date(year - 1900, month - 1, day);
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy.M (MMMM)", Locale.ENGLISH);
         return formatter.format(date);
+    }
+
+    private List<Worklog__1> prepareAllIssueUserWorklogs(JiraResponse data, AppConfig config)
+    {
+        final List<Worklog__1> allIssueUserWorklogs = new ArrayList<>();
+        data.getIssues().forEach(issue -> allIssueUserWorklogs.addAll(prepareUserWorkLogs(config, issue)));
+        return allIssueUserWorklogs;
+    }
+
+    private List<Worklog__1> prepareAllBugsUserWorklogs(JiraResponse data, AppConfig config)
+    {
+        final List<Worklog__1> allIssueUserWorklogs = new ArrayList<>();
+        data.getIssues().forEach(issue -> {
+            if (issue.getFields().getIssueType().getName().equalsIgnoreCase("bug"))
+            {
+                List<Worklog__1> userWorkLogs = prepareUserWorkLogs(config, issue);
+                allIssueUserWorklogs.addAll(userWorkLogs);
+            }
+        });
+        return allIssueUserWorklogs;
+    }
+
+    private List<Worklog__1> prepareAllNotBugsUserWorklogs(JiraResponse data, AppConfig config)
+    {
+        final List<Worklog__1> allIssueUserWorklogs = new ArrayList<>();
+        data.getIssues().forEach(issue -> {
+            if (!issue.getFields().getIssueType().getName().equalsIgnoreCase("bug"))
+            {
+                allIssueUserWorklogs.addAll(prepareUserWorkLogs(config, issue));
+            }
+        });
+        return allIssueUserWorklogs;
     }
 
     public void prepareDetailsPage(XSSFWorkbook workbook, UserConfig userConfig)
@@ -179,9 +210,9 @@ public class XlsxService
             userConfigs.forEach(userConfig -> {
                 Row row = sheet.createRow(sheet.getLastRowNum() + 1);
                 row.createCell(0).setCellValue(calcSimpleUsername(userConfig.getAppConfig().getUsername()));
-                row.createCell(1).setCellValue(calculateAllHours(userConfig.getJiraResponse()));
-                row.createCell(3).setCellValue(calculateBugHours(userConfig.getJiraResponse()));
-                row.createCell(5).setCellValue(calculateNotBugHours(userConfig.getJiraResponse()));
+                row.createCell(1).setCellValue(calculateAllHours(userConfig.getJiraResponse(), userConfig.getAppConfig()));
+                row.createCell(3).setCellValue(calculateBugHours(userConfig.getJiraResponse(), userConfig.getAppConfig()));
+                row.createCell(5).setCellValue(calculateNotBugHours(userConfig.getJiraResponse(), userConfig.getAppConfig()));
             });
 
             Row row4 = sheet.createRow(sheet.getLastRowNum() + 2);
@@ -203,19 +234,28 @@ public class XlsxService
         }
     }
 
-    private double calculateNotBugHours(JiraResponse jiraResponse)
+    private double calculateNotBugHours(JiraResponse jiraResponse, AppConfig appConfig)
     {
-        return 3;
+        final List<Worklog__1> allIssueUserWorklogs = prepareAllNotBugsUserWorklogs(jiraResponse, appConfig);
+        return allIssueUserWorklogs.stream()
+                .mapToDouble(worklog -> worklog.getTimeSpentSeconds() / 3600.0)
+                .sum();
     }
 
-    private double calculateBugHours(JiraResponse jiraResponse)
+    private double calculateBugHours(JiraResponse jiraResponse, AppConfig appConfig)
     {
-        return 2;
+        final List<Worklog__1> allIssueUserWorklogs = prepareAllBugsUserWorklogs(jiraResponse, appConfig);
+        return allIssueUserWorklogs.stream()
+                .mapToDouble(worklog -> worklog.getTimeSpentSeconds() / 3600.0)
+                .sum();
     }
 
-    private double calculateAllHours(JiraResponse jiraResponse)
+    private double calculateAllHours(JiraResponse jiraResponse, AppConfig appConfig)
     {
-        return 1;
+        final List<Worklog__1> allIssueUserWorklogs = prepareAllIssueUserWorklogs(jiraResponse, appConfig);
+        return allIssueUserWorklogs.stream()
+                .mapToDouble(worklog -> worklog.getTimeSpentSeconds() / 3600.0)
+                .sum();
     }
 
     private List<Worklog__1> prepareUserWorkLogs(AppConfig config, Issue issue)
