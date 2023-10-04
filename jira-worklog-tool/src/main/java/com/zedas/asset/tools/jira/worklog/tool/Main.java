@@ -36,7 +36,7 @@ public class Main
             final JsonConfig jsonConfig = gson.fromJson(configurationFile, JsonConfig.class);
             logger.debug("Json configuration parsed.");
             final List<AppConfig> appConfig = appConfigService.prepareAppConfig(jsonConfig);
-            final List<JiraResponse> jiraRespons = new ArrayList<>();
+            final List<JiraResponse> jiraResponses = new ArrayList<>();
             logger.debug("App configuration parsed.");
             XSSFWorkbook workbook = xlsxService.createWorkbookWithSums();
 
@@ -46,7 +46,7 @@ public class Main
                 logger.debug("Worklogs for " + config.getUsername() + " downloaded.");
                 jiraResponse = jiraApiService.updateWorklogIfNeeded(config, jiraResponse);
                 logger.debug("Worklogs for " + config.getUsername() + " updated.");
-                jiraRespons.add(jiraResponse);
+                jiraResponses.add(jiraResponse);
                 if (jiraResponse.getTotal() > jiraResponse.getMaxResults())
                 {
                     throw new IllegalStateException("JqlResponse total is greater than maxResults");
@@ -56,7 +56,7 @@ public class Main
                 xlsxService.prepareTimeSheetPage(workbook, config.getUsername(), jiraResponse);
                 logger.debug("Timesheet for " + config.getUsername() + " created.");
             }
-            xlsxService.updateSumsPage(workbook, jiraRespons);
+            xlsxService.updateSumsPage(workbook, jiraResponses);
             logger.debug("Sums calculated properly");
             workbook.write(Files.newOutputStream(Paths.get(jsonConfig.getPath())));
             logger.debug("Workbook saved properly.");

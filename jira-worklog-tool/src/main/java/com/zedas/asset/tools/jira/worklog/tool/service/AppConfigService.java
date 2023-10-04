@@ -15,7 +15,8 @@ public class AppConfigService
         final String usersString = jsonConfig.getUsers();
         final String[] users = usersString.split(",");
         for (String user : users) {
-            AppConfig appConfig = new AppConfig(user, jsonConfig.getPath(), jsonConfig.getUrl());
+            String email = user.trim();
+            AppConfig appConfig = new AppConfig(email, jsonConfig.getPath(), jsonConfig.getUrl());
             appConfig.setYear(jsonConfig.getYear());
             appConfig.setMonth(jsonConfig.getMonth());
 

@@ -1,7 +1,9 @@
 package com.zedas.asset.tools.jira.worklog.tool.service;
 
 import com.zedas.asset.tools.jira.worklog.tool.model.AppConfig;
+import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Issue;
 import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.JiraResponse;
+import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Worklog__1;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Row;
@@ -58,7 +60,8 @@ public class XlsxService
         List<Integer> days = IntStream.rangeClosed(1, config.getLastDayOfMonth()).boxed().toList();
         days.forEach(day -> row4.createCell(day + 1).setCellValue(day));
         row4.createCell(days.size() + 3).setCellValue("Sum");
-        for (int day : days) {
+        for (int day : days)
+        {
             sheet.setColumnWidth(day + 1, 5 * 256);
         }
 
@@ -85,10 +88,19 @@ public class XlsxService
             rowCounter.getAndIncrement();
         });
 
-        int sumRow = sheet.getLastRowNum() + 1;
-        String formula = "SUM(" + totalSumColumn + "6:" + totalSumColumn + sumRow + ")";
-        Row row = sheet.createRow(sumRow);
-        row.createCell(days.size() + 3).setCellFormula(formula);
+        if(data.getIssues().size()>0)
+        {
+            int sumRow = sheet.getLastRowNum() + 1;
+            String formula = "SUM(" + totalSumColumn + "6:" + totalSumColumn + sumRow + ")";
+            Row row = sheet.createRow(sumRow);
+            row.createCell(days.size() + 3).setCellFormula(formula);
+        }
+    }
+
+    public void updateSumsPage(XSSFWorkbook workbook, List<JiraResponse> data)
+    {
+        Sheet sheet = workbook.getSheet("sums");
+        workbook.getSheet("sums").createRow(0).createCell(0).setCellValue("Sums");
     }
 
     private String getColumnNameByIndex(int i)
@@ -106,11 +118,6 @@ public class XlsxService
             case 34 -> "AI";
             default -> "AJ";
         };
-    }
-
-    public void updateSumsPage(XSSFWorkbook workbook, List<JiraResponse> data)
-    {
-        Sheet sheet = workbook.getSheet("sums");
     }
 
     private static String calcSimpleUsername(String username)

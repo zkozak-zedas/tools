@@ -38,6 +38,9 @@ public class JiraApiService
             if (response.statusCode() == 200)
             {
                 JiraResponse jiraResponse = gson.fromJson(response.body(), JiraResponse.class);
+                if(jiraResponse.getIssues().isEmpty()) {
+                    logger.error("JiraService issue list is empty: " + response.statusCode() + " " + response.body());
+                }
                 return jiraResponse;
             }
             else
