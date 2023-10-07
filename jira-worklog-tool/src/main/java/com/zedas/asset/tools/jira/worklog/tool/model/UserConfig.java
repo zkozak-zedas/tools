@@ -1,6 +1,6 @@
 package com.zedas.asset.tools.jira.worklog.tool.model;
 
-import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.JiraResponse;
+import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.JiraResponse;
 
 public class UserConfig
 {

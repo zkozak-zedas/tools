@@ -1,5 +1,5 @@
 
-package com.zedas.asset.tools.jira.worklog.tool.model.jql.response;
+package com.zedas.asset.tools.jira.worklog.tool.model.jira.response;
 
 import java.util.List;
 

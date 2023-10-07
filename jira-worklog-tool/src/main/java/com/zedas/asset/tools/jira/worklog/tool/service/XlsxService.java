@@ -2,9 +2,9 @@ package com.zedas.asset.tools.jira.worklog.tool.service;
 
 import com.zedas.asset.tools.jira.worklog.tool.model.AppConfig;
 import com.zedas.asset.tools.jira.worklog.tool.model.UserConfig;
-import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Issue;
-import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.JiraResponse;
-import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.Worklog__1;
+import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.Issue;
+import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.JiraResponse;
+import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.Worklog__1;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;

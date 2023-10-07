@@ -1,12 +1,12 @@
 
-package com.zedas.asset.tools.jira.worklog.tool.model.jql.response;
+package com.zedas.asset.tools.jira.worklog.tool.model.jira.response;
 
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 
-public class Author {
+public class UpdateAuthor {
 
     @SerializedName("self")
     @Expose
@@ -19,7 +19,7 @@ public class Author {
     private String emailAddress;
     @SerializedName("avatarUrls")
     @Expose
-    private AvatarUrls avatarUrls;
+    private AvatarUrls__1 avatarUrls;
     @SerializedName("displayName")
     @Expose
     private String displayName;
@@ -57,11 +57,11 @@ public class Author {
         this.emailAddress = emailAddress;
     }
 
-    public AvatarUrls getAvatarUrls() {
+    public AvatarUrls__1 getAvatarUrls() {
         return avatarUrls;
     }
 
-    public void setAvatarUrls(AvatarUrls avatarUrls) {
+    public void setAvatarUrls(AvatarUrls__1 avatarUrls) {
         this.avatarUrls = avatarUrls;
     }
 

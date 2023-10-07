@@ -11,7 +11,7 @@ public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        String savePath = "C:\\Users\\mgellert\\Desktop\\translations.txt";
+        String savePath = args[1];
         String jsonPath = args[0]; // C:\Users\mgellert\Desktop\translations.json
         List<String> lines = Files.readAllLines(Paths.get(jsonPath), StandardCharsets.UTF_8);
         List<String> result = new ArrayList<>();
@@ -36,5 +36,6 @@ public class Main
         String resultString = String.join("", result);
 
         Files.writeString(Paths.get(savePath), resultString, StandardCharsets.UTF_8);
+        System.out.println("Done!");
     }
 }

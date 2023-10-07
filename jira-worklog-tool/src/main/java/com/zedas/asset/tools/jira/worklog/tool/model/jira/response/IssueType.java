@@ -1,4 +1,4 @@
-package com.zedas.asset.tools.jira.worklog.tool.model.jql.response;
+package com.zedas.asset.tools.jira.worklog.tool.model.jira.response;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

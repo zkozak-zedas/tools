@@ -2,9 +2,10 @@ package com.zedas.asset.tools.jira.worklog.tool;
 
 import com.google.gson.Gson;
 import com.zedas.asset.tools.jira.worklog.tool.model.AppConfig;
+import com.zedas.asset.tools.jira.worklog.tool.model.InsertWorklog;
 import com.zedas.asset.tools.jira.worklog.tool.model.JsonConfig;
 import com.zedas.asset.tools.jira.worklog.tool.model.UserConfig;
-import com.zedas.asset.tools.jira.worklog.tool.model.jql.response.JiraResponse;
+import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.JiraResponse;
 import com.zedas.asset.tools.jira.worklog.tool.service.AppConfigService;
 import com.zedas.asset.tools.jira.worklog.tool.service.JiraApiService;
 import com.zedas.asset.tools.jira.worklog.tool.service.XlsxService;
@@ -16,8 +17,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class Main
 {
@@ -68,34 +72,84 @@ public class Main
             final List<AppConfig> appConfigs = appConfigService.prepareAppConfig(jsonConfig);
             final List<UserConfig> userConfigs = new ArrayList<>();
             logger.debug("App configuration parsed.");
-            XSSFWorkbook workbook = xlsxService.createWorkbookWithSums();
-
-            for (AppConfig config : appConfigs)
+            if (jsonConfig.getMode() == null || !Objects.equals(jsonConfig.getMode(), "update"))
             {
-                JiraResponse jiraResponse = jiraApiService.downloadJqlWorklogData(config);
-                logger.debug("Worklogs for " + config.getUsername() + " downloaded.");
-                jiraResponse = jiraApiService.updateWorklogIfNeeded(config, jiraResponse);
-                logger.debug("Worklogs for " + config.getUsername() + " updated.");
-                if (jiraResponse.getTotal() > jiraResponse.getMaxResults())
+                XSSFWorkbook workbook = xlsxService.createWorkbookWithSums();
+
+                for (AppConfig config : appConfigs)
                 {
-                    throw new IllegalStateException("JqlResponse total is greater than maxResults");
+                    JiraResponse jiraResponse = jiraApiService.downloadJqlWorklogData(config);
+                    logger.debug("Worklogs for " + config.getUsername() + " downloaded.");
+                    jiraResponse = jiraApiService.updateWorklogIfNeeded(config, jiraResponse);
+                    logger.debug("Worklogs for " + config.getUsername() + " updated.");
+                    if (jiraResponse.getTotal() > jiraResponse.getMaxResults())
+                    {
+                        throw new IllegalStateException("JqlResponse total is greater than maxResults");
+                    }
+                    UserConfig userConfig = new UserConfig(config, jiraResponse);
+                    userConfigs.add(userConfig);
+                    xlsxService.prepareDetailsPage(workbook, userConfig);
+                    logger.debug("Details sheet for " + config.getUsername() + " created.");
+                    xlsxService.prepareTimeSheetPage(workbook, userConfig);
+                    logger.debug("Timesheet for " + config.getUsername() + " created.");
                 }
-                UserConfig userConfig = new UserConfig(config, jiraResponse);
-                userConfigs.add(userConfig);
-                xlsxService.prepareDetailsPage(workbook, userConfig);
-                logger.debug("Details sheet for " + config.getUsername() + " created.");
-                xlsxService.prepareTimeSheetPage(workbook, userConfig);
-                logger.debug("Timesheet for " + config.getUsername() + " created.");
+                xlsxService.updateSumsPage(workbook, userConfigs);
+                logger.debug("Sums calculated properly");
+                workbook.write(Files.newOutputStream(Paths.get(jsonConfig.getPath())));
+                logger.debug("Workbook saved properly.");
             }
-            xlsxService.updateSumsPage(workbook, userConfigs);
-            logger.debug("Sums calculated properly");
-            workbook.write(Files.newOutputStream(Paths.get(jsonConfig.getPath())));
-            logger.debug("Workbook saved properly.");
+            else
+            {
+                Path worklogPath = Paths.get(jsonConfig.getWorklogPath());
+                List<String> lines = Files.readAllLines(worklogPath);
+                List<String> worklogsToSend = new ArrayList<>();
+                for (String line : lines)
+                {
+                    if (line.startsWith("---"))
+                    {
+                        worklogsToSend.clear();
+                    }
+                    else
+                    {
+                        worklogsToSend.add(line);
+                    }
+                }
+                logger.debug("Raw worklogs to send: " + worklogsToSend);
+
+                List<InsertWorklog> insertWorklogs = jiraApiService.prepareWorklogsToSend(worklogsToSend);
+                for (InsertWorklog insertWorklog : insertWorklogs)
+                {
+                    int responseCode = jiraApiService.postWorklog(appConfigs, insertWorklog);
+                    if (responseCode == 201)
+                    {
+                        logger.debug("Worklog for " + insertWorklog + " created.");
+                    }
+                    else
+                    {
+                        logger.error("Worklog for " + insertWorklog + " not created. Response code: " + responseCode);
+                    }
+                }
+
+                String updateDateTime = prepareUpdateDateTime();
+                lines.add("");
+                lines.add("---------- updated " + updateDateTime + " ----------");
+                lines.add("");
+                lines.add("");
+                Files.writeString(worklogPath, StringUtils.join(lines, "\n"));
+                logger.debug("Worklogs updated!");
+            }
         }
         catch (Exception e)
         {
             logger.error("Main error: " + e.getMessage(), e);
         }
 
+    }
+
+    private static String prepareUpdateDateTime()
+    {
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yy HH:mm");
+        return formatter.format(date);
     }
 }
