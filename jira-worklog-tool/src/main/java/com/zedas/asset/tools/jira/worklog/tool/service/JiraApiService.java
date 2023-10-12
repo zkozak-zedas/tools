@@ -181,7 +181,7 @@ public class JiraApiService
 
     private String prepareComment(String[] lineFragments)
     {
-        String[] fragments = Arrays.copyOfRange(lineFragments, 1, lineFragments.length - 2);
+        String[] fragments = Arrays.copyOfRange(lineFragments, 1, lineFragments.length - 1);
         return String.join(" ", fragments);
     }
 
