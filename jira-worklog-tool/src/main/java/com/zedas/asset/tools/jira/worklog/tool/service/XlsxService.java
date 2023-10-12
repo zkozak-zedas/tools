@@ -185,6 +185,11 @@ public class XlsxService
         CellStyle boldStyle = workbook.createCellStyle();
         boldStyle.setFont(fontBold);
 
+        CellStyle greyBackgroundStyle = workbook.createCellStyle();
+        greyBackgroundStyle.setFillBackgroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        greyBackgroundStyle.setFillPattern(FillPatternType.BIG_SPOTS);
+        greyBackgroundStyle.setFillForegroundColor(IndexedColors.WHITE.getIndex());
+
         String simpleUsername = calcSimpleUsername(config.getUsername());
         String sheetName = WorkbookUtil.createSafeSheetName(simpleUsername + "-details");
         Sheet sheet = workbook.createSheet(sheetName);
@@ -206,9 +211,12 @@ public class XlsxService
         Row row4 = sheet.createRow(4);
         List<Integer> days = IntStream.rangeClosed(1, config.getLastDayOfMonth()).boxed().toList();
         days.forEach(day -> {
-            XSSFRichTextString cell = new XSSFRichTextString(day + "//" + config.getMonth());
+            XSSFRichTextString cell = new XSSFRichTextString(day + "·" + config.getMonth());
             cell.applyFont(fontItalic);
             row4.createCell(day + 1).setCellValue(cell);
+            if(isWeekend(day, config.getMonth(), config.getYear())) {
+                row4.getCell(day + 1).setCellStyle(greyBackgroundStyle);
+            }
         });
         row4.createCell(days.size() + 3).setCellValue("Sum");
         for (int day : days)
