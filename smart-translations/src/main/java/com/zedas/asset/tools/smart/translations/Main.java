@@ -14,61 +14,74 @@ public class Main
 {
 		public static void main(String[] args) throws IOException
 		{
-        String savePath = args[1];
-        String jsonPath = args[0]; // C:\Users\mgellert\Desktop\translations.json
-        List<String> lines = Files.readAllLines(Paths.get(jsonPath), StandardCharsets.UTF_8);
-        List<String> result = new ArrayList<>();
+				fromHttpGetReponse(args);
+//				fromOriginalFile();
+		}
 
-        String start = "export const baseTranslations = [\n  {\n";
-        result.add(start);
 
-        lines.forEach(line -> {
-            if(line.contains("\"key\":") || line.contains("\"de\":") )
-            {
-                result.add(line+"\n");
-            }
-            else if(line.contains("  },") || line.contains("\t},"))
-            {
-                result.add("  }, {"+"\n");
-            }
-        });
+		private static void fromHttpGetReponse(String[] args) throws IOException
+		{
+				String savePath = args[1];
+				String jsonPath = args[0]; // C:\Users\mgellert\Desktop\translations.json
+				List<String> lines = Files.readAllLines(Paths.get(jsonPath), StandardCharsets.UTF_8);
+				List<String> result = new ArrayList<>();
 
-        String end = "  }\n];";
-        result.add(end);
+				String start = "export const baseTranslations = [\n  {\n";
+				result.add(start);
 
-        String resultString = String.join("", result);
+				lines.forEach(line -> {
+						if(line.contains("\"key\":") || line.contains("\"de\":"))
+						{
+								result.add(line + "\n");
+						}
+						else if(line.contains("  },") || line.contains("\t},"))
+						{
+								result.add("  }, {" + "\n");
+						}
+				});
 
-        Files.writeString(Paths.get(savePath), resultString, StandardCharsets.UTF_8);
-        System.out.println("Done!");
-    }
+				String end = "  }\n];";
+				result.add(end);
 
-    private static void fromOriginalFile() throws IOException
-    {
-        String propertiesPath = "c:\\temp\\mobile-plugin-l10n.properties";
-        String outPath = "c:\\temp\\translations.json";
+				String resultString = String.join("", result);
 
-        try (FileReader fileReader = new FileReader(propertiesPath);
-             FileWriter fileWriter = new FileWriter(outPath))
-        {
-            StringBuffer outputString = new StringBuffer("export const baseTranslations = [\n");
-            Properties properties = new Properties();
-            properties.load(fileReader);
-            properties.forEach((key, value) -> {
+				Files.writeString(Paths.get(savePath), resultString, StandardCharsets.UTF_8);
+				System.out.println("Done!");
+		}
 
-                value = ((String)value).replace("\n", "\\n");
-                value = ((String)value).replace("\"", "\\\"");
 
-                outputString.append("{\n");
-                outputString.append("\"de\": ");
-                outputString.append("\"").append(value).append("\",\n");
-                outputString.append("\"key\": ");
-                outputString.append("\"").append(key).append("\",\n");
-                outputString.append("},\n");
-            });
-            outputString.deleteCharAt(outputString.lastIndexOf(","));
-            outputString.append("];");
+		private static void fromOriginalFile() throws IOException
+		{
+				String propertiesPath = "c:\\temp\\mobile-plugin-l10n.properties";
+				String outPath = "c:\\temp\\translations.json";
 
-            fileWriter.write(outputString.toString());
-        }
-    }
+				try (FileReader fileReader = new FileReader(propertiesPath); FileWriter fileWriter = new FileWriter(outPath))
+				{
+						StringBuffer outputString = new StringBuffer("export const baseTranslations = [\n");
+						Properties properties = new Properties();
+						properties.load(fileReader);
+						properties.forEach((key, value) -> {
+								String keyStr = (String) key;
+								String valueStr = (String) value;
+								if(keyStr.startsWith("mobile."))
+								{
+										keyStr = keyStr.substring(7);
+										valueStr = valueStr.replace("\n", "\\n");
+										valueStr = valueStr.replace("\"", "\\\"");
+
+										outputString.append("{\n");
+										outputString.append("\"de\": ");
+										outputString.append("\"").append(valueStr).append("\",\n");
+										outputString.append("\"key\": ");
+										outputString.append("\"").append(keyStr).append("\",\n");
+										outputString.append("},\n");
+								}
+
+						});
+						outputString.deleteCharAt(outputString.lastIndexOf(","));
+						outputString.append("];");
+
+						fileWriter.write(outputString.toString());
+				}
+		}
 }
