@@ -131,8 +131,9 @@ public class Main
                 }
 
                 String updateDateTime = prepareUpdateDateTime();
+                String summaryTime = prepareSummaryTime(insertWorklogs);
                 lines.add("");
-                lines.add("---------- updated " + updateDateTime + " ----------");
+                lines.add("---------- updated " + updateDateTime + " / " + summaryTime + " ----------");
                 lines.add("");
                 lines.add("");
                 Files.writeString(worklogPath, StringUtils.join(lines, "\n"));
@@ -144,6 +145,18 @@ public class Main
             logger.error("Main error: " + e.getMessage(), e);
         }
 
+    }
+
+    private static String prepareSummaryTime(List<InsertWorklog> insertWorklogs)
+    {
+        int seconds = 0;
+        for (InsertWorklog insertWorklog : insertWorklogs)
+        {
+            seconds += insertWorklog.getWorklogRequest().getTimeSpentSeconds();
+        }
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        return hours + "h " + minutes + "m";
     }
 
     private static String prepareUpdateDateTime()
