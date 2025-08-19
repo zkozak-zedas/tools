@@ -17,9 +17,7 @@ public class Author {
     @SerializedName("emailAddress")
     @Expose
     private String emailAddress;
-    @SerializedName("avatarUrls")
-    @Expose
-    private AvatarUrls avatarUrls;
+
     @SerializedName("displayName")
     @Expose
     private String displayName;
@@ -57,13 +55,7 @@ public class Author {
         this.emailAddress = emailAddress;
     }
 
-    public AvatarUrls getAvatarUrls() {
-        return avatarUrls;
-    }
 
-    public void setAvatarUrls(AvatarUrls avatarUrls) {
-        this.avatarUrls = avatarUrls;
-    }
 
     public String getDisplayName() {
         return displayName;

@@ -31,7 +31,7 @@ public class JiraApiService
     {
         try
         {
-            String url = appConfig.getUrl() + "/rest/api/2/search";
+            String url = appConfig.getUrl() + "/rest/api/3/search/jql";
             HttpClient client = HttpClient.newHttpClient();
             JqlRequest jqlRequest = new JqlRequest(appConfig.getJql());
 
@@ -73,7 +73,7 @@ public class JiraApiService
                 try
                 {
                     logger.debug("JiraService updateworklog for: " + issue.getKey());
-                    String url = appConfig.getUrl() + "/rest/api/2/issue/" + issue.getKey() + "/worklog";
+                    String url = appConfig.getUrl() + "/rest/api/3/issue/" + issue.getKey() + "/worklog";
                     HttpClient client = HttpClient.newHttpClient();
 
                     HttpRequest request = HttpRequest.newBuilder(
@@ -196,7 +196,7 @@ public class JiraApiService
         try
         {
             AppConfig appConfig = appConfigs.get(0);
-            String url = appConfig.getUrl() + "/rest/api/2/issue/" + insertWorklog.getIssueKey() + "/worklog";
+            String url = appConfig.getUrl() + "/rest/api/3/issue/" + insertWorklog.getIssueKey() + "/worklog";
             String json = gson.toJson(insertWorklog.getWorklogRequest());
             HttpClient client = HttpClient.newHttpClient();
 

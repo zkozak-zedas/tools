@@ -18,9 +18,9 @@ public class JqlRequest
     @SerializedName("maxResults")
     @Expose
     private final Integer maxResults = 100;
-    @SerializedName("startAt")
+    @SerializedName("nextPageToken")
     @Expose
-    private final Integer startAt = 0;
+    private final String nextPageToken = null;
     @SerializedName("jql")
     @Expose
     private final String jql;
@@ -50,9 +50,9 @@ public class JqlRequest
         return maxResults;
     }
 
-    public Integer getStartAt()
+    public String getNextPageToken()
     {
-        return startAt;
+        return nextPageToken;
     }
 
 }

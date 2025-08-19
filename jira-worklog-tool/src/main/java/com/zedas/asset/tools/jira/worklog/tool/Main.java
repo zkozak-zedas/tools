@@ -82,9 +82,9 @@ public class Main
                     logger.debug("Worklogs for " + config.getUsername() + " downloaded.");
                     jiraResponse = jiraApiService.updateWorklogIfNeeded(config, jiraResponse);
                     logger.debug("Worklogs for " + config.getUsername() + " updated.");
-                    if (jiraResponse.getTotal() > jiraResponse.getMaxResults())
+                    if (jiraResponse.getIsLast() != null && !jiraResponse.getIsLast())
                     {
-                        throw new IllegalStateException("JqlResponse total is greater than maxResults");
+                        throw new IllegalStateException("JqlResponse has more pages - pagination not implemented");
                     }
                     UserConfig userConfig = new UserConfig(config, jiraResponse);
                     userConfigs.add(userConfig);

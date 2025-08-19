@@ -14,12 +14,10 @@ public class Worklog__1 {
     @SerializedName("author")
     @Expose
     private Author author;
-    @SerializedName("updateAuthor")
-    @Expose
-    private UpdateAuthor updateAuthor;
+
     @SerializedName("comment")
     @Expose
-    private String comment;
+    private Comment comment;
     @SerializedName("created")
     @Expose
     private String created;
@@ -58,19 +56,13 @@ public class Worklog__1 {
         this.author = author;
     }
 
-    public UpdateAuthor getUpdateAuthor() {
-        return updateAuthor;
-    }
 
-    public void setUpdateAuthor(UpdateAuthor updateAuthor) {
-        this.updateAuthor = updateAuthor;
-    }
 
-    public String getComment() {
+    public Comment getComment() {
         return comment;
     }
 
-    public void setComment(String comment) {
+    public void setComment(Comment comment) {
         this.comment = comment;
     }
 

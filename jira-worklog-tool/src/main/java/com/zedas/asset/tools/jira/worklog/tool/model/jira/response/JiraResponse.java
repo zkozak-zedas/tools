@@ -13,15 +13,15 @@ public class JiraResponse
     @SerializedName("expand")
     @Expose
     private String expand;
-    @SerializedName("startAt")
+    @SerializedName("isLast")
     @Expose
-    private Integer startAt;
+    private Boolean isLast;
+    @SerializedName("nextPageToken")
+    @Expose
+    private String nextPageToken;
     @SerializedName("maxResults")
     @Expose
     private Integer maxResults;
-    @SerializedName("total")
-    @Expose
-    private Integer total;
     @SerializedName("issues")
     @Expose
     private List<Issue> issues;
@@ -34,12 +34,20 @@ public class JiraResponse
         this.expand = expand;
     }
 
-    public Integer getStartAt() {
-        return startAt;
+    public Boolean getIsLast() {
+        return isLast;
     }
 
-    public void setStartAt(Integer startAt) {
-        this.startAt = startAt;
+    public void setIsLast(Boolean isLast) {
+        this.isLast = isLast;
+    }
+
+    public String getNextPageToken() {
+        return nextPageToken;
+    }
+
+    public void setNextPageToken(String nextPageToken) {
+        this.nextPageToken = nextPageToken;
     }
 
     public Integer getMaxResults() {
@@ -48,14 +56,6 @@ public class JiraResponse
 
     public void setMaxResults(Integer maxResults) {
         this.maxResults = maxResults;
-    }
-
-    public Integer getTotal() {
-        return total;
-    }
-
-    public void setTotal(Integer total) {
-        this.total = total;
     }
 
     public List<Issue> getIssues() {

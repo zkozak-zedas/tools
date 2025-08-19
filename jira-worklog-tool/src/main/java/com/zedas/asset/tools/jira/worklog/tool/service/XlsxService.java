@@ -312,7 +312,7 @@ public class XlsxService
             row7.createCell(0).setCellValue("Sum Not Bugs");
             row7.createCell(1).setCellFormula("SUM(F5:F" + (userConfigs.size() + 4) + ")");
 
-            // TODO more statistics here.....
+
         }
     }
 
