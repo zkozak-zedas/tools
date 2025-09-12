@@ -7,9 +7,13 @@ import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.JiraResponse;
 import com.zedas.asset.tools.jira.worklog.tool.model.jira.response.Worklog__1;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Hyperlink;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -24,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -229,7 +234,15 @@ public class XlsxService
         String totalSumColumn = getColumnNameByIndex(days.size() + 3);
         data.getIssues().forEach(issue -> {
             Row row = sheet.createRow(sheet.getLastRowNum() + 1);
-            row.createCell(0).setCellValue(issue.getKey());
+            
+            // Create hyperlink for JIRA issue
+            Cell linkCell = row.createCell(0);
+            CreationHelper createHelper = workbook.getCreationHelper();
+            Hyperlink link = createHelper.createHyperlink(HyperlinkType.URL);
+            link.setAddress("https://zedas.atlassian.net/browse/" + issue.getKey());
+            linkCell.setHyperlink(link);
+            linkCell.setCellValue(issue.getKey());
+            
             row.createCell(1).setCellValue(issue.getFields().getSummary());
             List<Worklog__1> userWorklogs = prepareUserWorkLogs(config, issue);
 
@@ -240,7 +253,9 @@ public class XlsxService
                     double numericCellValue = row.getCell(day).getNumericCellValue();
                     row.getCell(day).setCellValue(numericCellValue + (worklog.getTimeSpentSeconds() / 3600.0));
                 } else {
-                    row.createCell(day).setCellValue(worklog.getTimeSpentSeconds() / 3600.0);
+                    Cell newCell = row.createCell(day);
+                    newCell.setCellValue(worklog.getTimeSpentSeconds() / 3600.0);
+                    addWorklogComment(newCell, worklog, sheet);
                 }
             });
             String formula = "SUM(C" + rowCounter.get() + ":" + sumColumn + rowCounter.get() + ")";
@@ -424,6 +439,53 @@ public class XlsxService
         int parsed = Integer.parseInt(fragment);
         parsed++; // it's moved, because of column with issue key and summary
         return parsed;
+    }
+
+    private void addWorklogComment(Cell cell, Worklog__1 worklog, Sheet sheet)
+    {
+        com.zedas.asset.tools.jira.worklog.tool.model.jira.response.Comment worklogComment = worklog.getComment();
+        if (worklogComment != null)
+        {
+
+            String commentText = null;
+            List<Object> content = worklogComment.getContent();
+            if(content != null && !content.isEmpty()) {
+                Object contentObject = content.get(0);
+                if(contentObject instanceof Map) {
+                    List<Object> contentObj = (List<Object>)((Map)contentObject).get("content");
+                    if(contentObj != null && !contentObj.isEmpty()) {
+                        Map<String,Object> contentMap = (Map<String, Object>) contentObj.get(0);
+                        Object textObj = contentMap.get("text");
+                        commentText = textObj != null ? textObj.toString() : null;
+                    }
+
+                }
+            }
+            
+
+
+
+            if (commentText != null && !commentText.trim().isEmpty() && !commentText.equals("[]"))
+            {
+                Drawing<?> drawing = sheet.createDrawingPatriarch();
+                CreationHelper factory = sheet.getWorkbook().getCreationHelper();
+                
+                // Create comment anchor (position and size)
+                org.apache.poi.ss.usermodel.ClientAnchor anchor = factory.createClientAnchor();
+                anchor.setCol1(cell.getColumnIndex());
+                anchor.setCol2(cell.getColumnIndex() + 3);
+                anchor.setRow1(cell.getRowIndex());
+                anchor.setRow2(cell.getRowIndex() + 3);
+                
+                // Create comment
+                org.apache.poi.ss.usermodel.Comment cellComment = drawing.createCellComment(anchor);
+                cellComment.setString(factory.createRichTextString(commentText));
+                cellComment.setAuthor(worklog.getAuthor().getDisplayName());
+                
+                // Attach comment to cell
+                cell.setCellComment(cellComment);
+            }
+        }
     }
 
 }
