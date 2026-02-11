@@ -108,14 +108,6 @@ public class XlsxService
             Row row4 = sheet.createRow(sheet.getLastRowNum() + 1);
             String formula = "SUM(B5:B" + (days.size() + 4) + ")";
             row4.createCell(1).setCellFormula(formula);
-
-            Row row5 = sheet.createRow(sheet.getLastRowNum() + 3);
-            Cell alCell = row5.createCell(0);
-            alCell.setCellValue("Aleksander Lisocki");
-            alCell.setCellStyle(italicStyle);
-            Cell mgCell = row5.createCell(1);
-            mgCell.setCellValue(fullUsername);
-            mgCell.setCellStyle(italicStyle);
         }
     }
 
