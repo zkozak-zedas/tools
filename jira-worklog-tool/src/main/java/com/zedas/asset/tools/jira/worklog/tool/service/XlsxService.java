@@ -187,11 +187,19 @@ public class XlsxService
         greyBackgroundStyle.setFillPattern(FillPatternType.BIG_SPOTS);
         greyBackgroundStyle.setFillForegroundColor(IndexedColors.WHITE.getIndex());
 
+        // Create hyperlink style (blue and underlined)
+        XSSFFont hyperlinkFont = workbook.createFont();
+        hyperlinkFont.setColor(IndexedColors.BLUE.getIndex());
+        hyperlinkFont.setUnderline(XSSFFont.U_SINGLE);
+        CellStyle hyperlinkStyle = workbook.createCellStyle();
+        hyperlinkStyle.setFont(hyperlinkFont);
+
         String simpleUsername = calcSimpleUsername(config.getUsername());
         String sheetName = WorkbookUtil.createSafeSheetName(simpleUsername + "-details");
         Sheet sheet = workbook.createSheet(sheetName);
         sheet.setColumnWidth(0, 15 * 256);
-        sheet.setColumnWidth(1, 50 * 256);
+        sheet.setColumnWidth(1, 55 * 256);
+        sheet.setColumnWidth(2, 50 * 256);
 
         Row row1 = sheet.createRow(0);
         row1.createCell(0).setCellValue("Month");
@@ -210,20 +218,20 @@ public class XlsxService
         days.forEach(day -> {
             XSSFRichTextString cell = new XSSFRichTextString(day + "·" + config.getMonth());
             cell.applyFont(fontItalic);
-            row4.createCell(day + 1).setCellValue(cell);
+            row4.createCell(day + 2).setCellValue(cell);
             if(isWeekend(day, config.getMonth(), config.getYear())) {
-                row4.getCell(day + 1).setCellStyle(greyBackgroundStyle);
+                row4.getCell(day + 2).setCellStyle(greyBackgroundStyle);
             }
         });
-        row4.createCell(days.size() + 3).setCellValue("Sum");
+        row4.createCell(days.size() + 4).setCellValue("Sum");
         for (int day : days)
         {
-            sheet.setColumnWidth(day + 1, 7 * 256);
+            sheet.setColumnWidth(day + 2, 7 * 256);
         }
 
         AtomicInteger rowCounter = new AtomicInteger(6);
-        String sumColumn = getColumnNameByIndex(days.size() + 1);
-        String totalSumColumn = getColumnNameByIndex(days.size() + 3);
+        String sumColumn = getColumnNameByIndex(days.size() + 2);
+        String totalSumColumn = getColumnNameByIndex(days.size() + 4);
         data.getIssues().forEach(issue -> {
             Row row = sheet.createRow(sheet.getLastRowNum() + 1);
             
@@ -234,8 +242,10 @@ public class XlsxService
             link.setAddress("https://zedas.atlassian.net/browse/" + issue.getKey());
             linkCell.setHyperlink(link);
             linkCell.setCellValue(issue.getKey());
-            
-            row.createCell(1).setCellValue(issue.getFields().getSummary());
+            linkCell.setCellStyle(hyperlinkStyle);
+
+            row.createCell(1).setCellValue(resolveProjectNumber(issue));
+            row.createCell(2).setCellValue(issue.getFields().getSummary());
             List<Worklog__1> userWorklogs = prepareUserWorkLogs(config, issue);
 
             userWorklogs.forEach(worklog -> {
@@ -250,8 +260,8 @@ public class XlsxService
                     addWorklogComment(newCell, worklog, sheet);
                 }
             });
-            String formula = "SUM(C" + rowCounter.get() + ":" + sumColumn + rowCounter.get() + ")";
-            row.createCell(days.size() + 3).setCellFormula(formula);
+            String formula = "SUM(D" + rowCounter.get() + ":" + sumColumn + rowCounter.get() + ")";
+            row.createCell(days.size() + 4).setCellFormula(formula);
             rowCounter.getAndIncrement();
         });
 
@@ -261,14 +271,14 @@ public class XlsxService
             Row row = sheet.createRow(sumRow);
             for (int day : days)
             {
-                String columnName = getColumnNameByIndex(day + 1);
+                String columnName = getColumnNameByIndex(day + 2);
                 String formula = "SUM(" + columnName + "6:" + columnName + sumRow + ")";
-                Cell cell = row.createCell(day + 1);
+                Cell cell = row.createCell(day + 2);
                 cell.setCellFormula(formula);
                 cell.setCellStyle(boldStyle);
             }
             String formula = "SUM(" + totalSumColumn + "6:" + totalSumColumn + sumRow + ")";
-            Cell totalSumCell = row.createCell(days.size() + 3);
+            Cell totalSumCell = row.createCell(days.size() + 4);
             totalSumCell.setCellFormula(formula);
             totalSumCell.setCellStyle(boldStyle);
         }
@@ -360,45 +370,27 @@ public class XlsxService
 
     private String getColumnNameByIndex(int i)
     {
-        return switch (i)
+        StringBuilder sb = new StringBuilder();
+        int n = i;
+        while (n >= 0)
         {
-            case 0 -> "A";
-            case 1 -> "B";
-            case 2 -> "C";
-            case 3 -> "D";
-            case 4 -> "E";
-            case 5 -> "F";
-            case 6 -> "G";
-            case 7 -> "H";
-            case 8 -> "I";
-            case 9 -> "J";
-            case 10 -> "K";
-            case 11 -> "L";
-            case 12 -> "M";
-            case 13 -> "N";
-            case 14 -> "O";
-            case 15 -> "P";
-            case 16 -> "Q";
-            case 17 -> "R";
-            case 18 -> "S";
-            case 19 -> "T";
-            case 20 -> "U";
-            case 21 -> "V";
-            case 22 -> "W";
-            case 23 -> "X";
-            case 24 -> "Y";
-            case 25 -> "Z";
-            case 26 -> "AA";
-            case 27 -> "AB";
-            case 28 -> "AC";
-            case 29 -> "AD";
-            case 30 -> "AE";
-            case 31 -> "AF";
-            case 32 -> "AG";
-            case 33 -> "AH";
-            case 34 -> "AI";
-            default -> "AJ";
-        };
+            sb.insert(0, (char) ('A' + (n % 26)));
+            n = n / 26 - 1;
+        }
+        return sb.toString();
+    }
+
+    private String resolveProjectNumber(Issue issue)
+    {
+        var projectNumberField = issue.getFields().getProjectNumber();
+        if (projectNumberField != null && projectNumberField.getValue() != null
+                && !projectNumberField.getValue().isBlank())
+        {
+            return projectNumberField.getValue();
+        }
+        String key = issue.getKey();
+        int dash = key.indexOf('-');
+        return dash > 0 ? key.substring(0, dash) : "";
     }
 
     private static String calcSimpleUsername(String username)
@@ -429,7 +421,7 @@ public class XlsxService
         String fragment = date.split("-")[2];
         fragment = fragment.substring(0, fragment.indexOf("T"));
         int parsed = Integer.parseInt(fragment);
-        parsed++; // it's moved, because of column with issue key and summary
+        parsed += 2; // columns: issue key, project number, summary, then day columns
         return parsed;
     }
 

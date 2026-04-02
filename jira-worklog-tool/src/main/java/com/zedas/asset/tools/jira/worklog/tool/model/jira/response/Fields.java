@@ -18,6 +18,9 @@ public class Fields
     @SerializedName("issuetype")
     @Expose
     private IssueType issueType;
+    @SerializedName("customfield_10454")
+    @Expose
+    private CustomFieldSelectOption projectNumber;
 
     public Worklog getWorklog()
     {
@@ -47,5 +50,15 @@ public class Fields
     public void setIssueType(IssueType issueType)
     {
         this.issueType = issueType;
+    }
+
+    public CustomFieldSelectOption getProjectNumber()
+    {
+        return projectNumber;
+    }
+
+    public void setProjectNumber(CustomFieldSelectOption projectNumber)
+    {
+        this.projectNumber = projectNumber;
     }
 }
