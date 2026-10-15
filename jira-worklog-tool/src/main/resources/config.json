@@ -1,9 +1,9 @@
 {
-  "users": "mgellert@zedas.com, zkozak@zedas.com, pmalek@zedas.com, ttuleja@zedas.com, pchojnacki@zedas.com",
-  "email": "mgellert@zedas.com",
+  "users": "abc@zedas.com, cde@zedas.com",
+  "email": "abc@zedas.com",
   "token": "token-xxxxx",
   "url": "https://zedas.atlassian.net",
-  "year": 2023,
-  "month": 9,
-  "path": "C:\\Users\\mgellert\\Desktop\\worklog.xlsx"
+  "year": 2026,
+  "month": 1,
+  "path": "C:\\Users\\abc\\Documents\\worklog\\worklog.xlsx"
 }
